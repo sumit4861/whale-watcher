@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WHALE WATCHER | Pro Trading UI</title>
+  <title>WHALE WATCHER | Multi-Currency</title>
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
   <link rel="stylesheet" href="styles.css">
@@ -19,7 +19,9 @@
           <h1>WHALE WATCHER</h1>
           <span id="assetSymbol" class="asset-symbol">BTC</span>
         </div>
-        <p>Advanced Real-Time Liquidity Tracker</p>
+        <select id="assetSelector" class="asset-selector">
+          <option value="BTCUSDT">BTC</option>
+        </select>
       </div>
       <div class="header-right">
         <div class="connection-status">
@@ -27,9 +29,11 @@
           <span>Live Stream</span>
         </div>
         <div class="price-ticker">
-          <span class="ticker-label">BTCUSDT</span>
-          <span class="ticker-price" id="tickerPrice">$0.00</span>
-          <span id="tickerChange" class="ticker-change">0.00%</span>
+          <span class="ticker-label" id="tickerLabel">BTCUSDT</span>
+          <div class="price-display">
+            <span class="ticker-price" id="tickerPrice">$0.00</span>
+            <span id="tickerChange" class="ticker-change">0.00%</span>
+          </div>
         </div>
       </div>
     </header>
@@ -38,8 +42,8 @@
       <aside class="sidebar-left">
         <div class="panel">
           <h3>Market Stats (1h)</h3>
-          <div class="stat-item"><span class="label">24h High:</span> <span id="high1h" class="value">$0.00</span></div>
-          <div class="stat-item"><span class="label">24h Low:</span> <span id="low1h" class="value">$0.00</span></div>
+          <div class="stat-item"><span class="label">1h High:</span> <span id="high1h" class="value">$0.00</span></div>
+          <div class="stat-item"><span class="label">1h Low:</span> <span id="low1h" class="value">$0.00</span></div>
           <div class="stat-item"><span class="label">Volume:</span> <span id="volume1h" class="value">0 BTC</span></div>
           <div class="stat-item"><span class="label">Whales (1h):</span> <span id="whaleCount" class="value">0</span>
           </div>
@@ -66,17 +70,105 @@
           </div>
         </div>
 
-      
+        <div class="panel legend-panel">
+          <h3>Whale Categories</h3>
+          <div class="legend-item">
+            <span class="legend-dot" style="background: #ffa500"></span>
+            <span>Small: $100K - $250K</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot" style="background: #ff6b35"></span>
+            <span>Medium: $250K - $500K</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot" style="background: #f6465d"></span>
+            <span>Large: $500K - $1M</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-dot" style="background: #d90429"></span>
+            <span>Mega: $1M+</span>
+          </div>
+        </div>
       </aside>
 
       <main class="chart-area">
+        <!-- AI PREDICTIONS PANEL - MAIN SCREEN -->
+        <div class="panel ai-predictions-main">
+          <div class="ai-header">
+            <h3>🤖 AI WHALE PREDICTIONS</h3>
+            <div class="ai-status">
+              <span class="ai-status-dot"></span>
+              <span id="aiStatusText">Analyzing...</span>
+            </div>
+          </div>
+
+          <div class="ai-grid">
+            <div class="ai-card">
+              <div class="ai-card-label">Whale Type</div>
+              <div class="ai-card-value" id="aiWhaleType">Unknown</div>
+              <div class="ai-card-desc" id="aiWhaleDesc">Waiting for data...</div>
+            </div>
+
+            <div class="ai-card">
+              <div class="ai-card-label">Behavior</div>
+              <div class="ai-card-value">
+                <span id="aiWhaleBehavior" class="ai-badge neutral">NEUTRAL</span>
+              </div>
+              <div class="ai-card-desc" id="aiWhaleConfidence">Confidence: 0%</div>
+            </div>
+
+            <div class="ai-card">
+              <div class="ai-card-label">Market Pattern</div>
+              <div class="ai-card-value" id="aiPattern">Normal Activity</div>
+              <div class="ai-card-desc" id="aiPatternDesc">Standard patterns</div>
+            </div>
+
+            <div class="ai-card">
+              <div class="ai-card-label">Recommendation</div>
+              <div class="ai-card-value">
+                <span id="aiRecommendation" class="ai-badge-large hold">HOLD</span>
+              </div>
+              <div class="ai-card-desc" id="aiRecommendationReason">No clear signals</div>
+            </div>
+
+            <div class="ai-card">
+              <div class="ai-card-label">AI Confidence</div>
+              <div class="confidence-bar-main">
+                <div id="aiConfidenceFill" class="confidence-fill-main" style="width: 0%"></div>
+                <div id="aiConfidenceText" class="confidence-text-main">0%</div>
+              </div>
+              <div class="ai-card-desc" id="aiRiskLevel">Risk: MEDIUM</div>
+            </div>
+
+            <div class="ai-card">
+              <div class="ai-card-label">Next Whale</div>
+              <div class="ai-card-value" id="aiNextWhale">Unknown</div>
+              <div class="ai-card-desc" id="aiNextWhaleProb">Probability: 0%</div>
+            </div>
+
+            <div class="ai-card">
+              <div class="ai-card-label">Market Sentiment</div>
+              <div class="ai-card-value">
+                <span id="aiSentiment" class="ai-badge sentiment-neutral">NEUTRAL</span>
+              </div>
+              <div class="ai-card-desc" id="aiSentimentScore">Score: 50/100</div>
+            </div>
+
+            <div class="ai-card">
+              <div class="ai-card-label">Price Impact</div>
+              <div class="ai-card-value" id="aiPriceImpact">MINIMAL</div>
+              <div class="ai-card-desc" id="aiPriceMove">Expected: $0.00</div>
+            </div>
+          </div>
+        </div>
+
         <div class="chart-container main-chart" id="candleChart"></div>
         <div class="chart-container rsi-chart" id="analyticsChart"></div>
       </main>
 
       <aside class="sidebar-right">
         <div class="panel whale-groups-panel">
-          <h3>Whale Alerts (>$500K)</h3>
+          <h3>🐋 Whale Alerts</h3>
 
           <div class="whale-group">
             <div class="group-header">
