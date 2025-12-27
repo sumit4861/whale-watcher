@@ -104,34 +104,91 @@ class WhaleAIPredictor {
     if (this.whaleHistory.length < 5) {
       return {
         name: 'Insufficient Data',
-        confidence: 0,
-        implication: 'Need more data'
+        confidence: 20,
+        implication: 'Need more whale activity to analyze'
       };
     }
 
     const recent = this.whaleHistory.slice(-20);
-    if (this.isAccumulationPattern(recent)) {
+    const timeSpans = [];
+    const volumes = recent.map(w => w.value);
+
+    // Calculate time intervals
+    for (let i = 1; i < recent.length; i++) {
+      timeSpans.push(recent[i].timestamp - recent[i - 1].timestamp);
+    }
+
+    const avgTimeSpan = timeSpans.reduce((a, b) => a + b, 0) / timeSpans.length;
+    const timeVariance = this.calculateVariance(timeSpans);
+    const volumeVariance = this.calculateVariance(volumes);
+
+    // Coordinated activity - low time variance
+    if (timeVariance < avgTimeSpan * 0.3 && recent.length > 10) {
+      return {
+        name: 'Coordinated Whale Activity',
+        description: 'Multiple whales acting in coordination',
+        confidence: 88,
+        implication: 'Major market move expected soon'
+      };
+    }
+    // High variance - erratic behavior
+    else if (volumeVariance > volumes[0] * 2) {
+      return {
+        name: 'Erratic Whale Behavior',
+        description: 'Unpredictable large trades',
+        confidence: 72,
+        implication: 'High volatility expected'
+      };
+    }
+    // Accumulation pattern
+    else if (this.isAccumulationPattern(recent)) {
+      const strength = this.calculatePatternStrength(recent, 'accumulation');
       return {
         name: 'Accumulation Phase',
-        description: 'Steady buying pressure',
-        confidence: 80,
+        description: 'Steady buying pressure from whales',
+        confidence: Math.round(75 + strength * 15),
         implication: 'Price likely to increase'
       };
-    } else if (this.isDistributionPattern(recent)) {
+    }
+    // Distribution pattern
+    else if (this.isDistributionPattern(recent)) {
+      const strength = this.calculatePatternStrength(recent, 'distribution');
       return {
         name: 'Distribution Phase',
-        description: 'Whales selling',
-        confidence: 80,
+        description: 'Whales selling into strength',
+        confidence: Math.round(75 + strength * 15),
         implication: 'Price likely to decrease'
       };
-    } else {
+    }
+    // Normal activity
+    else {
       return {
         name: 'Normal Activity',
-        description: 'Standard patterns',
-        confidence: 60,
+        description: 'Standard whale trading patterns',
+        confidence: 55,
         implication: 'No major moves expected'
       };
     }
+  }
+
+  calculatePatternStrength(whales, type) {
+    if (whales.length < 5) return 0;
+    const volumes = whales.map(w => w.value);
+    let matches = 0;
+
+    for (let i = 1; i < volumes.length; i++) {
+      if (type === 'accumulation' && volumes[i] > volumes[i - 1]) matches++;
+      if (type === 'distribution' && volumes[i] < volumes[i - 1]) matches++;
+    }
+
+    return matches / volumes.length; // Returns 0 to 1
+  }
+
+  calculateVariance(arr) {
+    if (arr.length === 0) return 0;
+    const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
+    const variance = arr.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / arr.length;
+    return Math.sqrt(variance);
   }
 
   predictPriceImpact(whale) {
@@ -178,27 +235,78 @@ class WhaleAIPredictor {
   generateRecommendation(pattern, whaleType) {
     let action = 'HOLD', reasoning = '', confidence = 50;
 
+    // Calculate base confidence from whale type and pattern
+    const whaleConfidence = whaleType.confidence || 0;
+    const patternConfidence = pattern.confidence || 0;
+
+    // Strong signals - high confidence
     if (whaleType.behavior === 'BULLISH' && pattern.name === 'Accumulation Phase') {
       action = 'BUY';
-      reasoning = 'Whales accumulating + bullish pattern';
-      confidence = 85;
-    } else if (whaleType.behavior === 'BEARISH' && pattern.name === 'Distribution Phase') {
-      action = 'SELL';
-      reasoning = 'Whales distributing + bearish pattern';
-      confidence = 85;
-    } else if (pattern.name === 'Coordinated Whale Activity') {
-      action = 'WAIT';
-      reasoning = 'Coordinated activity - wait for direction';
-      confidence = 70;
-    } else {
-      reasoning = 'No clear signals';
+      reasoning = 'Whales accumulating + bullish pattern detected';
+      confidence = Math.min(95, (whaleConfidence + patternConfidence) / 2 + 10);
     }
+    else if (whaleType.behavior === 'BEARISH' && pattern.name === 'Distribution Phase') {
+      action = 'SELL';
+      reasoning = 'Whales distributing + bearish pattern detected';
+      confidence = Math.min(95, (whaleConfidence + patternConfidence) / 2 + 10);
+    }
+    // Moderate signals
+    else if (whaleType.behavior === 'BULLISH') {
+      action = 'BUY';
+      reasoning = 'Bullish whale behavior detected';
+      confidence = Math.max(65, whaleConfidence - 5);
+    }
+    else if (whaleType.behavior === 'BEARISH') {
+      action = 'SELL';
+      reasoning = 'Bearish whale behavior detected';
+      confidence = Math.max(65, whaleConfidence - 5);
+    }
+    else if (pattern.name === 'Accumulation Phase') {
+      action = 'BUY';
+      reasoning = 'Accumulation pattern forming';
+      confidence = Math.max(60, patternConfidence);
+    }
+    else if (pattern.name === 'Distribution Phase') {
+      action = 'SELL';
+      reasoning = 'Distribution pattern forming';
+      confidence = Math.max(60, patternConfidence);
+    }
+    // Coordinated activity
+    else if (pattern.name === 'Coordinated Whale Activity') {
+      action = 'WAIT';
+      reasoning = 'Coordinated activity - wait for clear direction';
+      confidence = Math.max(70, patternConfidence);
+    }
+    // Market maker or neutral
+    else if (whaleType.type === 'Market Maker') {
+      action = 'HOLD';
+      reasoning = 'Market maker activity - avoid chasing';
+      confidence = Math.max(55, whaleConfidence - 10);
+    }
+    // Insufficient data or weak signals
+    else if (this.whaleHistory.length < 3) {
+      action = 'HOLD';
+      reasoning = 'Insufficient data for prediction';
+      confidence = 30;
+    }
+    // Default - weak signals
+    else {
+      action = 'HOLD';
+      reasoning = 'Mixed signals - no clear trend';
+      confidence = Math.max(40, (whaleConfidence + patternConfidence) / 2 - 10);
+    }
+
+    // Calculate risk level based on confidence and whale count
+    let riskLevel = 'MEDIUM';
+    if (confidence >= 80) riskLevel = 'LOW';
+    else if (confidence >= 60) riskLevel = 'MEDIUM';
+    else riskLevel = 'HIGH';
 
     return {
       action,
       reasoning,
-      confidence,
-      riskLevel: 'MEDIUM'
+      confidence: Math.round(confidence),
+      riskLevel
     };
   }
 
@@ -280,10 +388,10 @@ function saveWhaleAlert(whale) {
 
 // PRODUCTION THRESHOLDS
 const WHALE_CATEGORIES = {
-  SMALL: { min: 1000, max: 2500, label: 'Small Whale', color: '#ffa500' },
-  MEDIUM: { min: 2500, max: 5000, label: 'Medium Whale', color: '#ff6b35' },
-  LARGE: { min: 5000, max: 10000, label: 'Large Whale', color: '#f6465d' },
-  MEGA: { min: 10000, max: Infinity, label: 'Mega Whale', color: '#d90429' }
+  SMALL: { min: 100, max: 250, label: 'Small Whale', color: '#ffa500' },
+  MEDIUM: { min: 250, max: 500, label: 'Medium Whale', color: '#ff6b35' },
+  LARGE: { min: 500, max: 1000, label: 'Large Whale', color: '#f6465d' },
+  MEGA: { min: 1000, max: Infinity, label: 'Mega Whale', color: '#d90429' }
 };
 
 function categorizeWhale(tradeValue) {

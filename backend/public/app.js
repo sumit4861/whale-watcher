@@ -541,16 +541,29 @@ function updateAIPredictions(analysis) {
   confidenceFill.style.width = confidence + '%';
   confidenceText.textContent = confidence + '%';
 
-  if (confidence >= 80) {
-    confidenceFill.style.background = '#0ecb81';
-  } else if (confidence >= 60) {
-    confidenceFill.style.background = '#f7931a';
+  // Dynamic color coding based on confidence level
+  if (confidence >= 85) {
+    confidenceFill.style.background = 'linear-gradient(90deg, #0ecb81 0%, #26d97f 100%)';
+  } else if (confidence >= 70) {
+    confidenceFill.style.background = 'linear-gradient(90deg, #26d97f 0%, #f7931a 100%)';
+  } else if (confidence >= 50) {
+    confidenceFill.style.background = 'linear-gradient(90deg, #f7931a 0%, #ff6b35 100%)';
   } else {
-    confidenceFill.style.background = '#9598a1';
+    confidenceFill.style.background = 'linear-gradient(90deg, #ff6b35 0%, #f6465d 100%)';
   }
 
   document.getElementById('aiRiskLevel').textContent =
     `Risk: ${analysis.recommendation.riskLevel}`;
+
+  // Add visual indicator for confidence level
+  const riskEl = document.getElementById('aiRiskLevel');
+  if (confidence >= 80) {
+    riskEl.style.color = '#0ecb81';
+  } else if (confidence >= 60) {
+    riskEl.style.color = '#f7931a';
+  } else {
+    riskEl.style.color = '#f6465d';
+  }
 
   // Next Whale Prediction
   const nextWhale = analysis.nextWhaleTiming;
