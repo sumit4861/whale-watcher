@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WHALE WATCHER | Pro Trading UI</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <div class="app-container">
+    <header class="header">
+      <div class="header-left">
+        <div class="asset-header">
+          <img id="assetLogo" src="" alt="" class="asset-logo">
+          <h1>WHALE WATCHER</h1>
+          <span id="assetSymbol" class="asset-symbol">BTC</span>
+        </div>
+        <p>Advanced Real-Time Liquidity Tracker</p>
+      </div>
+      <div class="header-right">
+        <div class="connection-status">
+          <span class="status-dot pulse"></span>
+          <span>Live Stream</span>
+        </div>
+        <div class="price-ticker">
+          <span class="ticker-label">BTCUSDT</span>
+          <span class="ticker-price" id="tickerPrice">$0.00</span>
+          <span id="tickerChange" class="ticker-change">0.00%</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="main-content">
+      <aside class="sidebar-left">
+        <div class="panel">
+          <h3>Market Stats (1h)</h3>
+          <div class="stat-item"><span class="label">24h High:</span> <span id="high1h" class="value">$0.00</span></div>
+          <div class="stat-item"><span class="label">24h Low:</span> <span id="low1h" class="value">$0.00</span></div>
+          <div class="stat-item"><span class="label">Volume:</span> <span id="volume1h" class="value">0 BTC</span></div>
+          <div class="stat-item"><span class="label">Whales (1h):</span> <span id="whaleCount" class="value">0</span>
+          </div>
+          <div class="stat-item"><span class="label">Max Trade:</span> <span id="maxWhale" class="value">$0</span></div>
+        </div>
+
+        <div class="panel">
+          <h3>Technical Indicators</h3>
+          <div class="indicator-item">
+            <span class="label">RSI (14):</span>
+            <span id="rsiValue" class="value">50.00</span>
+          </div>
+          <div class="indicator-item">
+            <span class="label">SMA (20):</span>
+            <span id="smaValue" class="value">$0.00</span>
+          </div>
+          <div class="indicator-item">
+            <span class="label">EMA (12):</span>
+            <span id="emaValue" class="value">$0.00</span>
+          </div>
+          <div class="indicator-item">
+            <span class="label">Pressure:</span>
+            <span id="whalePressure" class="pressure-badge neutral">Neutral</span>
+          </div>
+        </div>
+
+      
+      </aside>
+
+      <main class="chart-area">
+        <div class="chart-container main-chart" id="candleChart"></div>
+        <div class="chart-container rsi-chart" id="analyticsChart"></div>
+      </main>
+
+      <aside class="sidebar-right">
+        <div class="panel whale-groups-panel">
+          <h3>Whale Alerts (>$500K)</h3>
+
+          <div class="whale-group">
+            <div class="group-header">
+              <span>Last 5 Minutes</span>
+              <span class="whale-count" id="count5min">0</span>
+            </div>
+            <div class="whale-list" id="alerts5min">
+              <div class="no-alerts">Waiting for whales...</div>
+            </div>
+          </div>
+
+          <div class="whale-group">
+            <div class="group-header">
+              <span>Last 10 Minutes</span>
+              <span class="whale-count" id="count10min">0</span>
+            </div>
+            <div class="whale-list" id="alerts10min">
+              <div class="no-alerts">Waiting for whales...</div>
+            </div>
+          </div>
+
+          <div class="whale-group">
+            <div class="group-header">
+              <span>Last 15 Minutes</span>
+              <span class="whale-count" id="count15min">0</span>
+            </div>
+            <div class="whale-list" id="alerts15min">
+              <div class="no-alerts">Waiting for whales...</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel history-panel">
+          <h3>Trade History</h3>
+          <div class="table-wrapper">
+            <table class="history-table">
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Qty</th>
+                  <th>Price</th>
+                </tr>
+              </thead>
+              <tbody id="historyBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
