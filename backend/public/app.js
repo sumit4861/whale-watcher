@@ -1,4 +1,4 @@
-const socket = io();
+const socket = io("https://whale-watcher-nuaj.onrender.com");
 let candleSeries, volSeries, analyticsSeries, candleChart, analyticsChart;
 let ma7Series, ma25Series, ma99Series;
 let lastPrice = 0;
